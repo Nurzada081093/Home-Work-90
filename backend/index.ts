@@ -11,12 +11,48 @@ app.use(cors());
 
 const router = express.Router();
 
+interface PX {
+    x: number;
+    y: number;
+}
+
+interface IncomingPX {
+    type: string;
+    payload: PX;
+}
+
 const connectedClients:WebSocket[] = [];
 
-router.ws('/canvas', (ws, req) => {
+const PXArray: PX[] = [];
+
+router.ws('/canvas', (ws, _req) => {
     connectedClients.push(ws);
     console.log('Client connected. Client total - ', connectedClients.length);
 
+    ws.send(JSON.stringify({
+        type: 'CANVAS',
+        payload: PXArray,
+    }));
+
+    ws.on('message', (message) => {
+        try {
+            const decodedPX = JSON.parse(message.toString()) as IncomingPX;
+
+            if (decodedPX.type === 'NEW_PX') {
+                PXArray.push(decodedPX.payload);
+
+                connectedClients.forEach((client) => {
+                    client.send(JSON.stringify({
+                        type: 'NEW_PX',
+                        payload: decodedPX.payload
+                    }));
+                });
+            }
+
+        } catch (e) {
+            ws.send(JSON.stringify({error: 'Invalid message'}));
+        }
+    });
 
     ws.on('close', () => {
         console.log('Client disconnected');
