@@ -2,6 +2,7 @@ import express from "express";
 import expressWs from "express-ws";
 import cors from "cors";
 import {WebSocket} from "ws";
+import {IncomingPX, PX} from "./types";
 
 const app = express();
 expressWs(app);
@@ -10,16 +11,6 @@ const port = 8000;
 app.use(cors());
 
 const router = express.Router();
-
-interface PX {
-    x: number;
-    y: number;
-}
-
-interface IncomingPX {
-    type: string;
-    payload: PX;
-}
 
 const connectedClients:WebSocket[] = [];
 
@@ -58,7 +49,6 @@ router.ws('/canvas', (ws, _req) => {
         console.log('Client disconnected');
         const index = connectedClients.indexOf(ws);
         connectedClients.splice(index, 1);
-        console.log('Client total - ', connectedClients.length);
     });
 });
 
