@@ -56,11 +56,36 @@ const App = () => {
       type: 'NEW_PX',
       payload: newPX,
     }));
-
-    setPxArray([]);
   };
 
   console.log(pxArray);
+
+  const drawPXInCanvas = () => {
+    const canvas = canvasRef.current;
+
+    if (!canvas) return;
+
+    const drawPX = canvas.getContext('2d');
+    if (!drawPX) return;
+
+    if (Array.isArray(pxArray[0])) {
+      pxArray[0].forEach((px) => {
+        drawPX.beginPath();
+        drawPX.arc(px.x, px.y, 3, 0, 2 * Math.PI);
+        drawPX.fill();
+      });
+    }
+
+    pxArray.forEach((px) => {
+      drawPX.beginPath();
+      drawPX.arc(px.x, px.y, 3, 0, 2 * Math.PI);
+      drawPX.fill();
+    });
+  };
+
+  useEffect(() => {
+    drawPXInCanvas();
+  }, [pxArray]);
 
   return (
     <>
