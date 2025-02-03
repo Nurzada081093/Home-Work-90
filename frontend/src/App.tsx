@@ -1,5 +1,5 @@
 import './App.css';
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface PX {
   x: number;
@@ -14,6 +14,7 @@ interface IncomingPX {
 const App = () => {
   const ws = useRef<WebSocket | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [pxArray, setPxArray] = useState<PX[]>([]);
 
   useEffect(() => {
     ws.current = new WebSocket('ws://localhost:8000/canvas');
@@ -22,7 +23,14 @@ const App = () => {
 
     ws.current.onmessage = event => {
       const decodedPX = JSON.parse(event.data) as IncomingPX;
-      console.log(decodedPX);
+
+      if (decodedPX.type === 'CANVAS') {
+        setPxArray((prevState) => [...prevState, decodedPX.payload]);
+      }
+
+      if (decodedPX.type === 'NEW_PX') {
+        setPxArray((prevArray) => [...prevArray, decodedPX.payload]);
+      }
     };
 
     return () => {
@@ -33,6 +41,27 @@ const App = () => {
     };
   }, []);
 
+  const clickCanvas = (e: React.MouseEvent<HTMLCanvasElement>) => {
+
+    if (!ws.current) return;
+
+    const canvasValue = e.nativeEvent as MouseEvent;
+
+    const newPX = {
+      x: Math.round(canvasValue.offsetX),
+      y: Math.round(canvasValue.offsetY),
+    };
+
+    ws.current.send(JSON.stringify({
+      type: 'NEW_PX',
+      payload: newPX,
+    }));
+
+    setPxArray([]);
+  };
+
+  console.log(pxArray);
+
   return (
     <>
       <canvas
@@ -40,6 +69,7 @@ const App = () => {
         width="500"
         height="500"
         style={{backgroundColor: 'green'}}
+        onClick={clickCanvas}
       />
     </>
   )
